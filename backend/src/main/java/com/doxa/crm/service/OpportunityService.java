@@ -6,6 +6,7 @@ import com.doxa.crm.domain.entity.Stage;
 import com.doxa.crm.domain.entity.StageHistory;
 import com.doxa.crm.domain.entity.User;
 import com.doxa.crm.domain.enums.OpportunitySource;
+import com.doxa.crm.domain.entity.OpportunityCall;
 import com.doxa.crm.domain.enums.OpportunityStatus;
 import com.doxa.crm.domain.enums.UserRole;
 import com.doxa.crm.dto.common.PageResponse;
@@ -16,6 +17,7 @@ import com.doxa.crm.dto.opportunity.UpdateOpportunityRequest;
 import com.doxa.crm.exception.AccessDeniedException;
 import com.doxa.crm.exception.ResourceNotFoundException;
 import com.doxa.crm.repository.ContactRepository;
+import com.doxa.crm.repository.OpportunityCallRepository;
 import com.doxa.crm.repository.OpportunityRepository;
 import com.doxa.crm.repository.StageHistoryRepository;
 import com.doxa.crm.repository.UserRepository;
@@ -32,17 +34,23 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OpportunityService {
 
     private final OpportunityRepository opportunityRepository;
+    private final OpportunityCallRepository opportunityCallRepository;
     private final ContactRepository contactRepository;
     private final UserRepository userRepository;
     private final StageHistoryRepository stageHistoryRepository;
     private final PipelineService pipelineService;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Transactional(readOnly = true)
     public PageResponse<OpportunityResponse> list(
@@ -62,17 +70,30 @@ public class OpportunityService {
                 .and(CrmSpecifications.fetchContactAndStage());
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<OpportunityResponse> result = opportunityRepository.findAll(spec, pageable)
-                .map(CrmMapper::toOpportunityResponse);
+        Page<Opportunity> pageResult = opportunityRepository.findAll(spec, pageable);
+        Map<UUID, OpportunityCall> callsByOpportunity = loadCalls(pageResult.getContent());
+
+        Page<OpportunityResponse> result = pageResult.map(opp ->
+                CrmMapper.toOpportunityResponse(opp, callsByOpportunity.get(opp.getId())));
 
         return PageResponse.from(result);
+    }
+
+    private Map<UUID, OpportunityCall> loadCalls(List<Opportunity> opportunities) {
+        if (opportunities.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> ids = opportunities.stream().map(Opportunity::getId).toList();
+        return opportunityCallRepository.findByOpportunity_IdIn(ids).stream()
+                .collect(Collectors.toMap(call -> call.getOpportunity().getId(), Function.identity()));
     }
 
     @Transactional(readOnly = true)
     public OpportunityResponse getById(AuthUser user, UUID id) {
         Opportunity opportunity = findOwned(id, user.getLicenseId());
         verifyAccess(opportunity, user);
-        return CrmMapper.toOpportunityResponse(opportunity);
+        OpportunityCall call = opportunityCallRepository.findByOpportunity_Id(id).orElse(null);
+        return CrmMapper.toOpportunityResponse(opportunity, call);
     }
 
     @Transactional
@@ -130,13 +151,23 @@ public class OpportunityService {
             opportunity.setAssignedUser(resolveAssignedUser(user, request.assignedUserId()));
         }
         if (request.status() != null && !request.status().isBlank()) {
-            opportunity.setStatus(OpportunityStatus.valueOf(request.status().toUpperCase()));
+            OpportunityStatus newStatus = OpportunityStatus.valueOf(request.status().toUpperCase());
+            opportunity.setStatus(newStatus);
+            if (newStatus == OpportunityStatus.WON) {
+                telegramNotificationService.notifyWon(
+                        user.getLicenseId(),
+                        opportunity.getContact().getName()
+                );
+            }
         }
         if (request.lostReason() != null) {
             opportunity.setLostReason(request.lostReason());
         }
 
-        return CrmMapper.toOpportunityResponse(opportunityRepository.save(opportunity));
+        return CrmMapper.toOpportunityResponse(
+                opportunityRepository.save(opportunity),
+                opportunityCallRepository.findByOpportunity_Id(id).orElse(null)
+        );
     }
 
     @Transactional
@@ -147,7 +178,17 @@ public class OpportunityService {
         Stage newStage = pipelineService.resolveStage(user, request.stageSlug());
         moveToStage(opportunity, newStage, user);
 
-        return CrmMapper.toOpportunityResponse(opportunityRepository.save(opportunity));
+        if ("triage-no-show".equals(newStage.getSlug())) {
+            telegramNotificationService.notifyNoShow(
+                    user.getLicenseId(),
+                    opportunity.getContact().getName()
+            );
+        }
+
+        return CrmMapper.toOpportunityResponse(
+                opportunityRepository.save(opportunity),
+                opportunityCallRepository.findByOpportunity_Id(id).orElse(null)
+        );
     }
 
     @Transactional

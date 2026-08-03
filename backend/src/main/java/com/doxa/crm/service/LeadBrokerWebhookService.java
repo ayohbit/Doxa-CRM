@@ -50,6 +50,7 @@ public class LeadBrokerWebhookService {
     private final OpportunityRepository opportunityRepository;
     private final StageHistoryRepository stageHistoryRepository;
     private final WebhookLogRepository webhookLogRepository;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Transactional
     public LeadBrokerWebhookResponse handle(String rawBody, String signatureHeader) {
@@ -117,6 +118,12 @@ public class LeadBrokerWebhookService {
                 .build());
 
         logWebhook(license, rawPayload, true, "processed", null);
+
+        telegramNotificationService.notifyNewLead(
+                license.getId(),
+                contact.getName(),
+                payload.brokerLeadId()
+        );
 
         return new LeadBrokerWebhookResponse(
                 opportunity.getId(),
