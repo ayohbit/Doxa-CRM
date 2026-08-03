@@ -34,6 +34,14 @@ public class GlobalExceptionHandler {
         return detail;
     }
 
+    @ExceptionHandler(WebhookRejectedException.class)
+    public ProblemDetail handleWebhookRejected(WebhookRejectedException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setTitle("Webhook rejected");
+        detail.setDetail(ex.getMessage());
+        return detail;
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);

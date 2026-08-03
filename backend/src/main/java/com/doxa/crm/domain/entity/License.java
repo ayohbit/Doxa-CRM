@@ -41,6 +41,9 @@ public class License {
     @Column(name = "webhook_secret", nullable = false)
     private String webhookSecret;
 
+    @Column(name = "broker_license_id")
+    private String brokerLicenseId;
+
     private String plan;
 
     @Column(name = "lead_credit_balance")

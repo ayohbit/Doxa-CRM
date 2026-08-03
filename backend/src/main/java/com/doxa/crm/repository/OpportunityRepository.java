@@ -58,4 +58,6 @@ public interface OpportunityRepository extends JpaRepository<Opportunity, UUID>,
             ORDER BY o.adSet
             """)
     List<String> findDistinctAdSets(@Param("licenseId") UUID licenseId);
+
+    Optional<Opportunity> findByLicenseIdAndBrokerLeadId(UUID licenseId, String brokerLeadId);
 }

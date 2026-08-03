@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface ContactRepository extends JpaRepository<Contact, UUID>, JpaSpecificationExecutor<Contact> {
 
     Optional<Contact> findByIdAndLicenseId(UUID id, UUID licenseId);
+
+    Optional<Contact> findByLicenseIdAndDedupeKey(UUID licenseId, String dedupeKey);
 }

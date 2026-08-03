@@ -185,6 +185,7 @@ public class DatabaseSeeder implements ApplicationRunner {
                 .companyName("DOXA Demo License")
                 .status(LicenseStatus.ACTIVE)
                 .webhookSecret("whsec_demo_license_secret_change_me")
+                .brokerLicenseId("lic_demo")
                 .plan("pro")
                 .build());
     }
@@ -195,6 +196,7 @@ public class DatabaseSeeder implements ApplicationRunner {
                 .companyName("Other Tenant (isolation test)")
                 .status(LicenseStatus.ACTIVE)
                 .webhookSecret("whsec_other_license_secret")
+                .brokerLicenseId("lic_other")
                 .plan("starter")
                 .build());
     }
