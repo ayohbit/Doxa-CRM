@@ -43,6 +43,28 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateOAuthState(java.util.UUID userId) {
+        return Jwts.builder()
+                .subject("oauth-state")
+                .claim("userId", userId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 600_000))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public java.util.UUID parseOAuthState(String state) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(state)
+                .getPayload();
+        if (!"oauth-state".equals(claims.getSubject())) {
+            throw new IllegalArgumentException("Invalid OAuth state");
+        }
+        return java.util.UUID.fromString(claims.get("userId", String.class));
+    }
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }

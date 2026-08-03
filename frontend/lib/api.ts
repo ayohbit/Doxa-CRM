@@ -4,12 +4,16 @@ import type {
   DailyPoint,
   DashboardKpis,
   FunnelStep,
+  IntegrationStatus,
   LoginResponse,
+  CallAnalysisResponse,
   Opportunity,
   Page,
   PipelineBoard,
   TeamUser,
+  TimelineEvent,
   User,
+  WrapUpResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -135,4 +139,53 @@ export function getDashboardAdSets() {
 
 export function getDashboardTeam() {
   return request<TeamUser[]>("/api/dashboard/team");
+}
+
+export function getIntegrationStatus() {
+  return request<IntegrationStatus>("/api/integrations/status");
+}
+
+export function getGoogleAuthUrl() {
+  return request<{ authUrl: string }>("/api/integrations/google/auth-url");
+}
+
+export function submitWrapUp(
+  opportunityId: string,
+  body: { outcome: string; objection?: string; nextStep?: string }
+) {
+  return request<WrapUpResponse>(`/api/opportunities/${opportunityId}/wrap-up`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function submitCallAnalysis(opportunityId: string, fathomUrl: string) {
+  return request<CallAnalysisResponse>(`/api/opportunities/${opportunityId}/call-analysis`, {
+    method: "POST",
+    body: JSON.stringify({ fathomUrl }),
+  });
+}
+
+export function sendCalendarInvite(
+  opportunityId: string,
+  body: { startAt: string; durationMinutes?: number; title?: string }
+) {
+  return request<{ status: string; message: string }>(
+    `/api/opportunities/${opportunityId}/calendar/invite`,
+    { method: "POST", body: JSON.stringify(body) }
+  );
+}
+
+export function sendContactEmail(
+  contactId: string,
+  body: { subject: string; body: string }
+) {
+  return request<{ status: string; message: string }>(`/api/contacts/${contactId}/email/send`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function getContactTimeline(contactId: string) {
+  return request<TimelineEvent[]>(`/api/contacts/${contactId}/timeline`);
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record OpportunityResponse(
         UUID id,
+        UUID contactId,
         String name,
         String stageId,
         String adSet,
@@ -12,6 +13,10 @@ public record OpportunityResponse(
         String createdOn,
         BigDecimal value,
         String email,
-        String phone
+        String phone,
+        String phoneE164,
+        String whatsAppUrl,
+        boolean hasWrapUp,
+        BigDecimal callScore
 ) {
 }

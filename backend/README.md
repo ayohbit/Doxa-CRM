@@ -85,6 +85,30 @@ Demo:
 - `license_id`: `lic_demo`
 - `webhook_secret`: `whsec_demo_license_secret_change_me`
 
+## Integrações (etapa 5/6)
+
+| Integração | Endpoint / ação | Notas |
+|------------|-----------------|-------|
+| **WhatsApp** | Link `wa.me` nos cards | Usa `phone_e164` do contato |
+| **Wrap-up** | `POST /api/opportunities/{id}/wrap-up` | Salva em `opportunity_calls` + timeline |
+| **Fathom** | `POST /api/opportunities/{id}/call-analysis` | Demo sem API key; live com `FATHOM_API_KEY` |
+| **Google Calendar** | `POST /api/opportunities/{id}/calendar/invite` | OAuth Google por usuário |
+| **Gmail** | `POST /api/contacts/{id}/email/send` | Registra no timeline do contato |
+| **Timeline** | `GET /api/contacts/{id}/timeline` | E-mails, convites, wrap-ups, análises |
+| **Google OAuth** | `GET /api/integrations/google/auth-url` | Callback público em `/api/integrations/google/callback` |
+| **Telegram** | Alertas internos | `TELEGRAM_BOT_TOKEN` + `chat_id` em `telegram_settings` |
+
+Variáveis opcionais em `application.properties` / env:
+
+| Variável | Descrição |
+|----------|-----------|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google (Calendar + Gmail) |
+| `GOOGLE_REDIRECT_URI` | Default: `http://localhost:8080/api/integrations/google/callback` |
+| `TELEGRAM_BOT_TOKEN` | Bot do @BotFather |
+| `FATHOM_API_KEY` | Chave API Fathom (demo funciona sem) |
+
+Para Telegram, insira o `chat_id` do time na tabela `telegram_settings` para a licença demo.
+
 ## Testes
 
 ```bash

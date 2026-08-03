@@ -42,6 +42,14 @@ public class GlobalExceptionHandler {
         return detail;
     }
 
+    @ExceptionHandler(IntegrationException.class)
+    public ProblemDetail handleIntegration(IntegrationException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setTitle("Integration error");
+        detail.setDetail(ex.getMessage());
+        return detail;
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);

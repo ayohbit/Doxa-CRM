@@ -34,7 +34,8 @@ public class SecurityConfig {
     public static final String[] PUBLIC_PATHS = {
             "/api/webhooks/**",
             "/api/health",
-            "/api/auth/login"
+            "/api/auth/login",
+            "/api/integrations/google/callback"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
