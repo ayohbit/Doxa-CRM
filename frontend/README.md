@@ -1,20 +1,25 @@
-# Spreed CRM
+# DOXA CRM — Frontend
 
-CRM demo com dados mockados (estilo GoHighLevel), construído com Next.js 16 (App Router), Tailwind CSS 4, Recharts e lucide-react.
+Next.js 16 (App Router) conectado à API real em `http://localhost:8080`.
 
-## Páginas
-
-- `/` — **Dashboard**: faixa de KPIs do funil (Ad Spend → Leads → Triage → SC Booked → SC Shown → Closes), tiles de Cash Collected / Revenue / ROAS, gráfico diário de Spend · CC · Revenue e gráfico de drop-off do funil.
-- `/opportunities` — **Kanban de oportunidades** do "Ads Pipeline" com 10 estágios, cards com Ad Set, Revenue Monthly, data de criação e ações rápidas.
-- `/contacts` — **Tabela de contatos** com tags e busca.
-
-## Rodando
+## Rodar
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
+npm run dev
 ```
 
-## Dados
+Opcional — `.env.local`:
 
-Todos os dados são mockados e determinísticos em `lib/data.ts` — edite lá para mudar estágios, oportunidades, KPIs e séries dos gráficos.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+## Páginas
+
+- `/login` — autenticação JWT
+- `/` — Dashboard (KPIs e gráficos da API)
+- `/opportunities` — Kanban/lista, busca, criar oportunidade, integrações nos cards
+- `/contacts` — tabela, busca, criar contato
+
+Setup completo (banco + backend + frontend): veja o [README na raiz do projeto](../README.md).

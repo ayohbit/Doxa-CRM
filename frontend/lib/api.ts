@@ -97,6 +97,32 @@ export function listContacts(params: { q?: string; page?: number; size?: number 
   return request<Page<Contact>>(`/api/contacts?${search}`);
 }
 
+export function createContact(body: {
+  name: string;
+  email?: string;
+  phone?: string;
+  tags?: string[];
+}) {
+  return request<Contact>("/api/contacts", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function createOpportunity(body: {
+  contactId: string;
+  stageSlug: string;
+  value?: number;
+  adSet?: string;
+  revenueMonthly?: string;
+  assignedUserId?: string;
+}) {
+  return request<Opportunity>("/api/opportunities", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 function dashboardQuery(params: {
   periodDays: number;
   assignedUserId?: string;
