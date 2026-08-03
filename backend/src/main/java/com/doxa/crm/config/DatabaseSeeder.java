@@ -114,10 +114,13 @@ public class DatabaseSeeder implements ApplicationRunner {
                     .revenueMonthly(seed.revenueMonthly())
                     .source(OpportunitySource.MANUAL)
                     .assignedUser(i % 3 == 0 ? closer : (i % 3 == 1 ? admin : null))
-                    .status(OpportunityStatus.OPEN)
+                    .status(i == 0 ? OpportunityStatus.WON : OpportunityStatus.OPEN)
                     .createdAt(seed.createdAt())
                     .updatedAt(seed.createdAt())
                     .build();
+            if (i == 0) {
+                opportunity.setValue(new BigDecimal("5700"));
+            }
             opportunities.add(opportunity);
         }
 
@@ -136,6 +139,44 @@ public class DatabaseSeeder implements ApplicationRunner {
         }
 
         log.info("Seed complete: {} contacts, {} opportunities", contacts.size(), opportunities.size());
+        seedOtherTenantSample(otherLicense);
+    }
+
+    private void seedOtherTenantSample(License otherLicense) {
+        Pipeline pipeline = pipelineRepository.save(Pipeline.builder()
+                .id(UUID.fromString("88888888-8888-8888-8888-888888888888"))
+                .license(otherLicense)
+                .name("Ads Pipeline")
+                .build());
+
+        Stage stage = stageRepository.save(Stage.builder()
+                .id(UUID.fromString("99999999-9999-9999-9999-999999999999"))
+                .pipeline(pipeline)
+                .slug("new-lead")
+                .name("New Lead")
+                .position(0)
+                .monetaryValue(BigDecimal.ZERO)
+                .build());
+
+        Contact contact = contactRepository.save(Contact.builder()
+                .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+                .license(otherLicense)
+                .name("Other Tenant Contact")
+                .email("secret@other-tenant.com")
+                .phone("+1 (555) 000-0001")
+                .phoneE164("+15550000001")
+                .dedupeKey("email:secret@other-tenant.com")
+                .build());
+
+        opportunityRepository.save(Opportunity.builder()
+                .id(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"))
+                .license(otherLicense)
+                .contact(contact)
+                .stage(stage)
+                .value(new BigDecimal("9999"))
+                .source(OpportunitySource.MANUAL)
+                .status(OpportunityStatus.OPEN)
+                .build());
     }
 
     private License seedDemoLicense() {

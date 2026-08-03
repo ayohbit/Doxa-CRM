@@ -21,6 +21,7 @@ import com.doxa.crm.repository.StageHistoryRepository;
 import com.doxa.crm.repository.UserRepository;
 import com.doxa.crm.repository.spec.CrmSpecifications;
 import com.doxa.crm.security.AuthUser;
+import com.doxa.crm.security.RolePolicy;
 import com.doxa.crm.util.CrmMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,17 +32,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OpportunityService {
-
-    private static final List<String> SDR_STAGE_SLUGS = List.of(
-            "form-no-booking", "form-no-answer", "new-lead", "early-triage",
-            "waiting-reply", "triage-not-qualified", "triage-no-show"
-    );
 
     private final OpportunityRepository opportunityRepository;
     private final ContactRepository contactRepository;
@@ -64,7 +59,7 @@ public class OpportunityService {
                 .and(CrmSpecifications.opportunityInStageSlug(stageSlug))
                 .and(CrmSpecifications.opportunitySearch(search))
                 .and(CrmSpecifications.opportunityStatus(status != null ? status : OpportunityStatus.OPEN))
-                .and(fetchContactAndStage());
+                .and(CrmSpecifications.fetchContactAndStage());
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<OpportunityResponse> result = opportunityRepository.findAll(spec, pageable)
@@ -204,20 +199,9 @@ public class OpportunityService {
                 && opportunity.getAssignedUser().getId().equals(user.getId())) {
             return;
         }
-        if (user.getRole() == UserRole.SDR && SDR_STAGE_SLUGS.contains(opportunity.getStage().getSlug())) {
+        if (user.getRole() == UserRole.SDR && RolePolicy.SDR_STAGE_SLUGS.contains(opportunity.getStage().getSlug())) {
             return;
         }
         throw new AccessDeniedException("You do not have access to this opportunity");
-    }
-
-    private Specification<Opportunity> fetchContactAndStage() {
-        return (root, query, cb) -> {
-            if (query != null && Long.class != query.getResultType() && long.class != query.getResultType()) {
-                root.fetch("contact", jakarta.persistence.criteria.JoinType.INNER);
-                root.fetch("stage", jakarta.persistence.criteria.JoinType.INNER);
-                query.distinct(true);
-            }
-            return cb.conjunction();
-        };
     }
 }
