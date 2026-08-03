@@ -21,7 +21,7 @@ Dashboard, pipeline Kanban, contatos, webhook Lead Broker e integrações (Whats
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/<seu-usuario>/Doxa-CRM.git
+git clone https://github.com/ayohbit/Doxa-CRM.git
 cd Doxa-CRM
 ```
 
