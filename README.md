@@ -1,4 +1,4 @@
-# DOXA CRM
+# DOXA CRM 1.0
 
 CRM multi-tenant para licenciados DOXA — backend **Spring Boot 4** + **PostgreSQL** e frontend **Next.js 16**.  
 Dashboard, pipeline Kanban, contatos, webhook Lead Broker e integrações (WhatsApp, Google, Fathom, Telegram).
