@@ -1,10 +1,14 @@
 import { clearToken, getToken } from "./auth";
 import type {
   Contact,
+  DailyPoint,
+  DashboardKpis,
+  FunnelStep,
   LoginResponse,
   Opportunity,
   Page,
   PipelineBoard,
+  TeamUser,
   User,
 } from "./types";
 
@@ -87,4 +91,48 @@ export function listContacts(params: { q?: string; page?: number; size?: number 
   search.set("page", String(params.page ?? 0));
   search.set("size", String(params.size ?? 50));
   return request<Page<Contact>>(`/api/contacts?${search}`);
+}
+
+function dashboardQuery(params: {
+  periodDays: number;
+  assignedUserId?: string;
+  adSet?: string;
+}) {
+  const search = new URLSearchParams();
+  search.set("periodDays", String(params.periodDays));
+  if (params.assignedUserId) search.set("assignedUserId", params.assignedUserId);
+  if (params.adSet) search.set("adSet", params.adSet);
+  return search.toString();
+}
+
+export function getDashboardKpis(params: {
+  periodDays: number;
+  assignedUserId?: string;
+  adSet?: string;
+}) {
+  return request<DashboardKpis>(`/api/dashboard/kpis?${dashboardQuery(params)}`);
+}
+
+export function getDashboardDailySeries(params: {
+  periodDays: number;
+  assignedUserId?: string;
+  adSet?: string;
+}) {
+  return request<DailyPoint[]>(`/api/dashboard/daily-series?${dashboardQuery(params)}`);
+}
+
+export function getDashboardFunnel(params: {
+  periodDays: number;
+  assignedUserId?: string;
+  adSet?: string;
+}) {
+  return request<FunnelStep[]>(`/api/dashboard/funnel?${dashboardQuery(params)}`);
+}
+
+export function getDashboardAdSets() {
+  return request<string[]>("/api/dashboard/ad-sets");
+}
+
+export function getDashboardTeam() {
+  return request<TeamUser[]>("/api/dashboard/team");
 }

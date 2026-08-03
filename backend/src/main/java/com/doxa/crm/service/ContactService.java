@@ -6,12 +6,14 @@ import com.doxa.crm.dto.common.PageResponse;
 import com.doxa.crm.dto.contact.ContactResponse;
 import com.doxa.crm.dto.contact.CreateContactRequest;
 import com.doxa.crm.dto.contact.UpdateContactRequest;
+import com.doxa.crm.exception.AccessDeniedException;
 import com.doxa.crm.exception.ResourceNotFoundException;
 import com.doxa.crm.repository.ContactRepository;
 import com.doxa.crm.repository.LicenseRepository;
 import com.doxa.crm.repository.OpportunityRepository;
 import com.doxa.crm.repository.spec.CrmSpecifications;
 import com.doxa.crm.security.AuthUser;
+import com.doxa.crm.security.RolePolicy;
 import com.doxa.crm.util.CrmMapper;
 import com.doxa.crm.util.PhoneNormalizer;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class ContactService {
     public PageResponse<ContactResponse> list(AuthUser user, String search, int page, int size) {
         Specification<Contact> spec = Specification
                 .where(CrmSpecifications.contactBelongsToLicense(user.getLicenseId()))
+                .and(CrmSpecifications.contactMatchesRole(user))
                 .and(CrmSpecifications.contactSearch(search));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -49,12 +52,14 @@ public class ContactService {
 
     @Transactional(readOnly = true)
     public ContactResponse getById(AuthUser user, UUID id) {
-        Contact contact = findOwned(id, user.getLicenseId());
+        Contact contact = findAccessible(id, user);
         return CrmMapper.toContactResponse(contact);
     }
 
     @Transactional
     public ContactResponse create(AuthUser user, CreateContactRequest request) {
+        RolePolicy.requireWriteAccess(user);
+
         License license = licenseRepository.findById(user.getLicenseId())
                 .orElseThrow(() -> new ResourceNotFoundException("License not found"));
 
@@ -74,7 +79,8 @@ public class ContactService {
 
     @Transactional
     public ContactResponse update(AuthUser user, UUID id, UpdateContactRequest request) {
-        Contact contact = findOwned(id, user.getLicenseId());
+        RolePolicy.requireWriteAccess(user);
+        Contact contact = findAccessible(id, user);
 
         if (request.name() != null && !request.name().isBlank()) {
             contact.setName(request.name());
@@ -97,15 +103,34 @@ public class ContactService {
 
     @Transactional
     public void delete(AuthUser user, UUID id) {
-        Contact contact = findOwned(id, user.getLicenseId());
+        RolePolicy.requireAdmin(user);
+        Contact contact = findAccessible(id, user);
+
         if (opportunityRepository.countByContactId(contact.getId()) > 0) {
             throw new IllegalStateException("Cannot delete contact with linked opportunities");
         }
         contactRepository.delete(contact);
     }
 
-    private Contact findOwned(UUID id, UUID licenseId) {
+    private Contact findAccessible(UUID id, UUID licenseId) {
         return contactRepository.findByIdAndLicenseId(id, licenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+    }
+
+    private Contact findAccessible(UUID id, AuthUser user) {
+        Contact contact = findAccessible(id, user.getLicenseId());
+        verifyContactAccess(contact, user);
+        return contact;
+    }
+
+    private void verifyContactAccess(Contact contact, AuthUser user) {
+        Specification<Contact> spec = Specification
+                .where(CrmSpecifications.contactBelongsToLicense(user.getLicenseId()))
+                .and(CrmSpecifications.contactMatchesRole(user))
+                .and((root, query, cb) -> cb.equal(root.get("id"), contact.getId()));
+
+        if (contactRepository.count(spec) == 0) {
+            throw new AccessDeniedException("You do not have access to this contact");
+        }
     }
 }

@@ -55,3 +55,40 @@ export type LoginResponse = {
   tokenType: string;
   user: User;
 };
+
+export type DashboardKpis = {
+  adSpend: number;
+  leads: number;
+  costPerLead: number;
+  triage: number;
+  costPerTriage: number;
+  scBooked: number;
+  costPerScBooked: number;
+  scShown: number;
+  costPerScShown: number;
+  closes: number;
+  costPerClose: number;
+  cashCollected: number;
+  revenue: number;
+  roasCc: number;
+  roasRevenue: number;
+};
+
+export type DailyPoint = {
+  day: string;
+  spend: number;
+  cashCollected: number;
+  revenue: number;
+};
+
+export type FunnelStep = {
+  stage: string;
+  pct: number;
+  count: number;
+};
+
+export type TeamUser = {
+  id: string;
+  email: string;
+  role: string;
+};
