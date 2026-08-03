@@ -1,0 +1,122 @@
+# DOXA CRM — Backend
+
+API Spring Boot + PostgreSQL. **Setup completo (banco → backend → frontend):** veja [README na raiz](../README.md).
+
+## Quick start
+
+- Java 21
+- Docker Desktop (PostgreSQL local)
+- Maven (ou use `./mvnw`)
+
+## Subir o banco local
+
+Na pasta `backend/`:
+
+```bash
+docker compose up -d
+```
+
+Isso cria o PostgreSQL em `localhost:5432` com:
+
+| Campo    | Valor      |
+|----------|------------|
+| Database | `doxa_crm` |
+| User     | `doxa`     |
+| Password | `doxa`     |
+
+A configuração está em `src/main/resources/application.properties`.
+
+## Rodar a API
+
+```bash
+./mvnw spring-boot:run
+```
+
+A API sobe em `http://localhost:8080`.
+
+- Health: `GET /api/health`
+- Login: `POST /api/auth/login`
+- Usuário logado: `GET /api/auth/me` (header `Authorization: Bearer <token>`)
+
+## Usuários demo (seed automático)
+
+Na primeira execução com banco vazio, o seed cria dados equivalentes ao mock do frontend.
+
+| Email               | Senha        | Papel  |
+|---------------------|--------------|--------|
+| admin@demo.doxa.com | password123  | ADMIN  |
+| closer@demo.doxa.com| password123  | CLOSER |
+| sdr@demo.doxa.com   | password123  | SDR    |
+
+Também existe um segundo tenant (`admin@other.doxa.com`) para testes de isolamento futuros.
+
+## Migrations
+
+Schema gerenciado pelo Flyway em `src/main/resources/db/migration/`.
+
+## Endpoints principais (etapa 2)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/pipelines/board` | Estágios do pipeline + totais |
+| GET | `/api/opportunities?stageSlug=&q=&page=&size=` | Lista paginada |
+| POST | `/api/opportunities` | Criar oportunidade |
+| PUT | `/api/opportunities/{id}` | Atualizar |
+| PATCH | `/api/opportunities/{id}/stage` | Mover estágio (grava history) |
+| DELETE | `/api/opportunities/{id}` | Remover |
+| GET | `/api/contacts?q=&page=&size=` | Lista paginada com busca |
+| POST | `/api/contacts` | Criar contato |
+| PUT | `/api/contacts/{id}` | Atualizar |
+| DELETE | `/api/contacts/{id}` | Remover |
+
+Todas as rotas (exceto health, login e webhooks) exigem header `Authorization: Bearer <token>`.
+
+| **Lead Broker** | POST webhooks/lead-broker | Público, assinado. Contrato na Seção 05 do PDF. |
+
+### Webhook Lead Broker
+
+`POST /api/webhooks/lead-broker`
+
+Headers:
+- `Content-Type: application/json`
+- `X-Broker-Signature: sha256=<HMAC-SHA256 do corpo bruto com webhook_secret da licença>`
+
+Demo:
+- `license_id`: `lic_demo`
+- `webhook_secret`: `whsec_demo_license_secret_change_me`
+
+## Integrações (etapa 5/6)
+
+| Integração | Endpoint / ação | Notas |
+|------------|-----------------|-------|
+| **WhatsApp** | Link `wa.me` nos cards | Usa `phone_e164` do contato |
+| **Wrap-up** | `POST /api/opportunities/{id}/wrap-up` | Salva em `opportunity_calls` + timeline |
+| **Fathom** | `POST /api/opportunities/{id}/call-analysis` | Demo sem API key; live com `FATHOM_API_KEY` |
+| **Google Calendar** | `POST /api/opportunities/{id}/calendar/invite` | OAuth Google por usuário |
+| **Gmail** | `POST /api/contacts/{id}/email/send` | Registra no timeline do contato |
+| **Timeline** | `GET /api/contacts/{id}/timeline` | E-mails, convites, wrap-ups, análises |
+| **Google OAuth** | `GET /api/integrations/google/auth-url` | Callback público em `/api/integrations/google/callback` |
+| **Telegram** | Alertas internos | `TELEGRAM_BOT_TOKEN` + `chat_id` em `telegram_settings` |
+
+Variáveis opcionais em `application.properties` / env:
+
+| Variável | Descrição |
+|----------|-----------|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google (Calendar + Gmail) |
+| `GOOGLE_REDIRECT_URI` | Default: `http://localhost:8080/api/integrations/google/callback` |
+| `TELEGRAM_BOT_TOKEN` | Bot do @BotFather |
+| `FATHOM_API_KEY` | Chave API Fathom (demo funciona sem) |
+
+Para Telegram, insira o `chat_id` do time na tabela `telegram_settings` para a licença demo.
+
+## Testes
+
+```bash
+./mvnw test
+```
+
+## Variáveis de ambiente (opcional)
+
+| Variável     | Descrição                          |
+|--------------|------------------------------------|
+| `JWT_SECRET` | Secret HMAC para tokens JWT        |
