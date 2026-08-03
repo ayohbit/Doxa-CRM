@@ -6,7 +6,7 @@ import {
   CheckSquare,
   CalendarDays,
 } from "lucide-react";
-import type { Opportunity } from "@/lib/data";
+import type { Opportunity } from "@/lib/types";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
