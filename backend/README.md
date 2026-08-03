@@ -1,8 +1,8 @@
 # DOXA CRM — Backend
 
-API Spring Boot 21 + PostgreSQL para o CRM multi-tenant.
+API Spring Boot + PostgreSQL. **Setup completo (banco → backend → frontend):** veja [README na raiz](../README.md).
 
-## Pré-requisitos
+## Quick start
 
 - Java 21
 - Docker Desktop (PostgreSQL local)

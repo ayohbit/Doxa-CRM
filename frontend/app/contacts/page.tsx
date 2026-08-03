@@ -3,6 +3,7 @@
 import { Search, Plus, Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import AuthGuard from "@/components/auth-guard";
+import AddContactModal from "@/components/add-contact-modal";
 import { listContacts } from "@/lib/api";
 import type { Contact } from "@/lib/types";
 
@@ -21,6 +22,8 @@ export default function ContactsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const loadContacts = useCallback(async (query: string) => {
     setLoading(true);
@@ -62,11 +65,21 @@ export default function ContactsPage() {
             <button className="flex items-center gap-1.5 rounded-md border border-[var(--grid)] px-3 py-1.5 text-[13px] text-[var(--text-secondary)] hover:bg-neutral-50">
               <Download size={13} /> Import
             </button>
-            <button className="flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+            >
               <Plus size={14} /> Add contact
             </button>
           </div>
         </div>
+
+        {toast && (
+          <div className="border-b border-emerald-200 bg-emerald-50 px-5 py-2 text-[13px] text-emerald-800">
+            {toast}
+          </div>
+        )}
 
         {error && (
           <div className="border-b border-red-200 bg-red-50 px-5 py-2 text-[13px] text-red-700">
@@ -133,6 +146,16 @@ export default function ContactsPage() {
           )}
         </div>
       </div>
+
+      {showAddModal && (
+        <AddContactModal
+          onClose={() => setShowAddModal(false)}
+          onCreated={() => {
+            setToast("Contato criado com sucesso.");
+            loadContacts(search);
+          }}
+        />
+      )}
     </AuthGuard>
   );
 }

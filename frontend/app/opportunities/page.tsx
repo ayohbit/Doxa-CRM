@@ -15,12 +15,16 @@ import {
   ListFilter,
   ClipboardList,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AuthGuard from "@/components/auth-guard";
+import AddOpportunityModal from "@/components/add-opportunity-modal";
 import OpportunityCard from "@/components/opportunity-card";
 import { getPipelineBoard, listOpportunities } from "@/lib/api";
 import { fmtMoneyFull } from "@/lib/format";
 import type { Opportunity, Stage } from "@/lib/types";
+
+type ViewMode = "kanban" | "list";
+type SortKey = "name" | "value" | "stage";
 
 export default function OpportunitiesPage() {
   const [pipelineName, setPipelineName] = useState("Ads Pipeline");
@@ -30,6 +34,10 @@ export default function OpportunitiesPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("kanban");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const loadBoard = useCallback(async (query: string) => {
     setLoading(true);
@@ -61,6 +69,33 @@ export default function OpportunitiesPage() {
     return () => clearTimeout(timer);
   }, [search, loadBoard]);
 
+  const stageNames = useMemo(
+    () => Object.fromEntries(stages.map((s) => [s.id, s.name])),
+    [stages]
+  );
+
+  const flatOpportunities = useMemo(() => {
+    const all = Object.entries(opportunitiesByStage).flatMap(([stageId, opps]) =>
+      opps.map((o) => ({ ...o, stageId }))
+    );
+    return all.sort((a, b) => {
+      if (sortKey === "value") {
+        return (b.value ?? 0) - (a.value ?? 0);
+      }
+      if (sortKey === "stage") {
+        return (stageNames[a.stageId] ?? "").localeCompare(stageNames[b.stageId] ?? "");
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [opportunitiesByStage, sortKey, stageNames]);
+
+  function cycleSort() {
+    setSortKey((prev) => (prev === "name" ? "value" : prev === "value" ? "stage" : "name"));
+  }
+
+  const sortLabel =
+    sortKey === "name" ? "Name" : sortKey === "value" ? "Value" : "Stage";
+
   return (
     <AuthGuard>
       <div className="flex h-full flex-col bg-white">
@@ -87,10 +122,28 @@ export default function OpportunitiesPage() {
           </span>
           <div className="ml-auto flex items-center gap-2">
             <div className="flex overflow-hidden rounded-md border border-[var(--grid)]">
-              <button className="border-r border-[var(--grid)] bg-blue-50 p-1.5 text-[var(--brand)]">
+              <button
+                type="button"
+                onClick={() => setViewMode("kanban")}
+                className={`border-r border-[var(--grid)] p-1.5 ${
+                  viewMode === "kanban"
+                    ? "bg-blue-50 text-[var(--brand)]"
+                    : "text-[var(--text-muted)] hover:bg-neutral-50"
+                }`}
+                title="Kanban view"
+              >
                 <LayoutGrid size={14} />
               </button>
-              <button className="p-1.5 text-[var(--text-muted)] hover:bg-neutral-50">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 ${
+                  viewMode === "list"
+                    ? "bg-blue-50 text-[var(--brand)]"
+                    : "text-[var(--text-muted)] hover:bg-neutral-50"
+                }`}
+                title="List view"
+              >
                 <List size={14} />
               </button>
             </div>
@@ -98,7 +151,11 @@ export default function OpportunitiesPage() {
               <Download size={13} />
               Import
             </button>
-            <button className="flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+            >
               <Plus size={14} />
               Add opportunity
             </button>
@@ -124,8 +181,12 @@ export default function OpportunitiesPage() {
             <button className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-[var(--brand)]">
               <Filter size={12} /> Advanced filters (1)
             </button>
-            <button className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-[var(--brand)]">
-              <ArrowUpDown size={12} /> Sort (1)
+            <button
+              type="button"
+              onClick={cycleSort}
+              className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[12px] text-[var(--brand)]"
+            >
+              <ArrowUpDown size={12} /> Sort: {sortLabel}
             </button>
           </div>
           <div className="ml-auto flex items-center gap-3">
@@ -144,6 +205,12 @@ export default function OpportunitiesPage() {
           </div>
         </div>
 
+        {toast && (
+          <div className="border-b border-emerald-200 bg-emerald-50 px-5 py-2 text-[13px] text-emerald-800">
+            {toast}
+          </div>
+        )}
+
         {error && (
           <div className="border-b border-red-200 bg-red-50 px-5 py-2 text-[13px] text-red-700">
             {error}
@@ -156,7 +223,7 @@ export default function OpportunitiesPage() {
           </div>
         )}
 
-        {!loading && (
+        {!loading && viewMode === "kanban" && (
           <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto bg-[var(--page)] p-4">
             {stages.map((stage) => {
               const cards = opportunitiesByStage[stage.id] ?? [];
@@ -196,7 +263,58 @@ export default function OpportunitiesPage() {
             })}
           </div>
         )}
+
+        {!loading && viewMode === "list" && (
+          <div className="min-h-0 flex-1 overflow-auto bg-[var(--page)]">
+            <table className="w-full bg-white text-left text-[13px]">
+              <thead className="sticky top-0 bg-[var(--page)] text-[11.5px] uppercase tracking-wide text-[var(--text-muted)]">
+                <tr>
+                  <th className="px-5 py-2.5 font-medium">Name</th>
+                  <th className="px-5 py-2.5 font-medium">Stage</th>
+                  <th className="px-5 py-2.5 font-medium">Ad Set</th>
+                  <th className="px-5 py-2.5 font-medium">Value</th>
+                  <th className="px-5 py-2.5 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flatOpportunities.map((o) => (
+                  <tr key={o.id} className="border-b border-[var(--grid)] hover:bg-neutral-50">
+                    <td className="px-5 py-3 font-medium">{o.name}</td>
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">
+                      {stageNames[o.stageId] ?? o.stageId}
+                    </td>
+                    <td className="max-w-[200px] truncate px-5 py-3 text-[var(--text-secondary)]">
+                      {o.adSet ?? "—"}
+                    </td>
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">
+                      {fmtMoneyFull(o.value ?? 0)}
+                    </td>
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">{o.createdOn}</td>
+                  </tr>
+                ))}
+                {flatOpportunities.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-[var(--text-muted)]">
+                      Nenhuma oportunidade encontrada.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {showAddModal && (
+        <AddOpportunityModal
+          stages={stages}
+          onClose={() => setShowAddModal(false)}
+          onCreated={() => {
+            setToast("Oportunidade criada com sucesso.");
+            loadBoard(search);
+          }}
+        />
+      )}
     </AuthGuard>
   );
 }
