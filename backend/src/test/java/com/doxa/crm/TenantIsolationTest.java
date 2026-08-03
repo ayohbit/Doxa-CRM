@@ -1,8 +1,6 @@
 package com.doxa.crm;
 
 import com.doxa.crm.config.TestDataConfig;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +10,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,7 +31,7 @@ class TenantIsolationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
 
     @Test
     void demoTenantCannotReadOtherTenantContact() throws Exception {
@@ -59,7 +59,7 @@ class TenantIsolationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode body = objectMapper.readTree(listResult.getResponse().getContentAsString());
+        JsonNode body = jsonMapper.readTree(listResult.getResponse().getContentAsString());
         if (body.get("content").isEmpty()) {
             return;
         }
@@ -85,7 +85,7 @@ class TenantIsolationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode json = jsonMapper.readTree(result.getResponse().getContentAsString());
         return json.get("token").asText();
     }
 }

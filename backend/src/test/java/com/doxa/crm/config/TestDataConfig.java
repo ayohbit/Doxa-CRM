@@ -72,14 +72,16 @@ public class TestDataConfig {
                     .id(LICENSE_DEMO_ID)
                     .companyName("Demo")
                     .status(LicenseStatus.ACTIVE)
-                    .webhookSecret("secret-demo")
+                    .webhookSecret("whsec_demo_license_secret_change_me")
+                    .brokerLicenseId("lic_demo")
                     .build());
 
             License other = licenseRepository.save(License.builder()
                     .id(LICENSE_OTHER_ID)
                     .companyName("Other")
                     .status(LicenseStatus.ACTIVE)
-                    .webhookSecret("secret-other")
+                    .webhookSecret("whsec_other_license_secret")
+                    .brokerLicenseId("lic_other")
                     .build());
 
             userRepository.save(User.builder()

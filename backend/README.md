@@ -71,6 +71,20 @@ Schema gerenciado pelo Flyway em `src/main/resources/db/migration/`.
 
 Todas as rotas (exceto health, login e webhooks) exigem header `Authorization: Bearer <token>`.
 
+| **Lead Broker** | POST webhooks/lead-broker | Público, assinado. Contrato na Seção 05 do PDF. |
+
+### Webhook Lead Broker
+
+`POST /api/webhooks/lead-broker`
+
+Headers:
+- `Content-Type: application/json`
+- `X-Broker-Signature: sha256=<HMAC-SHA256 do corpo bruto com webhook_secret da licença>`
+
+Demo:
+- `license_id`: `lic_demo`
+- `webhook_secret`: `whsec_demo_license_secret_change_me`
+
 ## Testes
 
 ```bash
