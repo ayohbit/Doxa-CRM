@@ -54,6 +54,23 @@ Também existe um segundo tenant (`admin@other.doxa.com`) para testes de isolame
 
 Schema gerenciado pelo Flyway em `src/main/resources/db/migration/`.
 
+## Endpoints principais (etapa 2)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/pipelines/board` | Estágios do pipeline + totais |
+| GET | `/api/opportunities?stageSlug=&q=&page=&size=` | Lista paginada |
+| POST | `/api/opportunities` | Criar oportunidade |
+| PUT | `/api/opportunities/{id}` | Atualizar |
+| PATCH | `/api/opportunities/{id}/stage` | Mover estágio (grava history) |
+| DELETE | `/api/opportunities/{id}` | Remover |
+| GET | `/api/contacts?q=&page=&size=` | Lista paginada com busca |
+| POST | `/api/contacts` | Criar contato |
+| PUT | `/api/contacts/{id}` | Atualizar |
+| DELETE | `/api/contacts/{id}` | Remover |
+
+Todas as rotas (exceto health, login e webhooks) exigem header `Authorization: Bearer <token>`.
+
 ## Testes
 
 ```bash
