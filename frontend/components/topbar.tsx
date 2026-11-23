@@ -2,7 +2,7 @@ import { Phone, Sparkles, Megaphone, Bell, HelpCircle } from "lucide-react";
 
 export default function Topbar() {
   return (
-    <header className="flex h-12 shrink-0 items-center justify-end gap-2 border-b border-[var(--hairline)] bg-white px-4">
+    <header className="flex h-12 shrink-0 items-center justify-end gap-2 border-b border-[var(--hairline)] bg-[var(--background)] px-4">
       <button className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600">
         <Phone size={14} />
       </button>

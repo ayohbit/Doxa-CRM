@@ -21,7 +21,10 @@ import {
   Settings,
   Search,
   ChevronsUpDown,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type Item = {
   label: string;
@@ -56,8 +59,8 @@ function NavRow({ item, active }: { item: Item; active: boolean }) {
   const Icon = item.icon;
   const cls = `flex items-center gap-2.5 rounded-md px-3 py-[7px] text-[13px] transition-colors ${
     active
-      ? "bg-[var(--sidebar-active)] text-white font-medium"
-      : "text-slate-300 hover:bg-[var(--sidebar-hover)] hover:text-white"
+      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)] font-medium"
+      : "text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-active-text)]"
   }`;
   const body = (
     <>
@@ -86,48 +89,90 @@ function NavRow({ item, active }: { item: Item; active: boolean }) {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("doxa-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDarkTheme(savedTheme ? savedTheme === "dark" : prefersDark);
+  }, []);
+
+  useEffect(() => {
+    const theme = isDarkTheme ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    window.localStorage.setItem("doxa-theme", theme);
+  }, [isDarkTheme]);
+
   return (
-    <aside className="flex h-screen w-[230px] shrink-0 flex-col bg-[var(--sidebar-bg)]">
-      <div className="flex items-center justify-center border-b border-white/10 px-4 py-4">
+    <aside className="flex h-screen w-[230px] shrink-0 flex-col border-r border-[var(--grid)] bg-[var(--sidebar-bg)]">
+      <div className="flex shrink-0 items-center justify-center border-b border-[var(--grid)] px-4 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded bg-[var(--brand)] text-sm font-bold text-white">
             S
           </div>
-          <span className="text-sm font-semibold text-white">Spreed CRM</span>
+          <span className="text-sm font-semibold text-[var(--sidebar-text)]">Spreed CRM</span>
         </div>
       </div>
 
       <button
         type="button"
-        className="mx-3 mt-3 flex items-center justify-between rounded-md bg-[var(--sidebar-hover)] px-3 py-2 text-left"
+        className="mx-3 mt-3 flex shrink-0 items-center justify-between rounded-md bg-[var(--sidebar-hover)] px-3 py-2 text-left"
       >
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-medium text-white">Spreed AI</div>
-          <div className="truncate text-[11px] text-slate-400">Orlando, FL</div>
+          <div className="truncate text-[13px] font-medium text-[var(--sidebar-text)]">Spreed AI</div>
+          <div className="truncate text-[11px] text-[var(--sidebar-text-muted)]">Orlando, FL</div>
         </div>
-        <ChevronsUpDown size={14} className="text-slate-400" />
+        <ChevronsUpDown size={14} className="text-[var(--sidebar-text-muted)]" />
       </button>
 
-      <div className="mx-3 mt-3 flex items-center gap-2 rounded-md bg-[var(--sidebar-hover)] px-3 py-1.5">
-        <Search size={13} className="text-slate-400" />
-        <span className="text-[12px] text-slate-400">Search</span>
-        <span className="ml-auto rounded border border-slate-600 px-1 text-[10px] text-slate-400">
+      <div className="mx-3 mt-3 flex shrink-0 items-center gap-2 rounded-md bg-[var(--sidebar-hover)] px-3 py-1.5">
+        <Search size={13} className="text-[var(--sidebar-text-muted)]" />
+        <span className="text-[12px] text-[var(--sidebar-text-muted)]">Search</span>
+        <span className="ml-auto rounded border border-[var(--grid)] px-1 text-[10px] text-[var(--sidebar-text-muted)]">
           ⌘K
         </span>
       </div>
 
-      <nav className="mt-3 flex-1 space-y-px overflow-y-auto px-3 pb-3">
+      <nav className="mt-3 min-h-0 flex-1 space-y-px overflow-y-auto px-3 pb-3">
         {mainItems.map((item) => (
           <NavRow key={item.label} item={item} active={item.href === pathname} />
         ))}
-        <div className="!my-3 border-t border-white/10" />
+        <div className="!my-3 border-t border-[var(--grid)]" />
         {secondaryItems.map((item) => (
           <NavRow key={item.label} item={item} active={false} />
         ))}
       </nav>
 
-      <div className="border-t border-white/10 px-3 py-3">
-        <NavRow item={{ label: "Settings", icon: Settings }} active={false} />
+      <div className="flex shrink-0 items-center gap-1 border-t border-[var(--grid)] px-3 py-3">
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-3 py-[7px] text-[13px] text-[var(--sidebar-text)] opacity-80 transition-colors hover:bg-[var(--sidebar-hover)]"
+        >
+          <Settings size={15} className="shrink-0" />
+          <span className="truncate">Settings</span>
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isDarkTheme}
+          aria-label={isDarkTheme ? "Ativar modo claro" : "Ativar modo escuro"}
+          title={isDarkTheme ? "Modo claro" : "Modo escuro"}
+          onClick={() => setIsDarkTheme((current) => !current)}
+          className={`relative flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+            isDarkTheme
+              ? "border-slate-600 bg-slate-700"
+              : "border-[var(--grid)] bg-slate-200"
+          }`}
+        >
+          <span
+            className={`absolute flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${
+              isDarkTheme ? "translate-x-[24px] text-slate-700" : "translate-x-[3px] text-amber-500"
+            }`}
+          >
+            {isDarkTheme ? <Moon size={11} /> : <Sun size={11} />}
+          </span>
+        </button>
       </div>
     </aside>
   );

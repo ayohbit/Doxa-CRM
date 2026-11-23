@@ -67,7 +67,12 @@ public class DatabaseSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!seedEnabled || licenseRepository.count() > 0) {
+        if (!seedEnabled) {
+            return;
+        }
+
+        if (licenseRepository.count() > 0) {
+            ensureDemoCredentials();
             return;
         }
 
@@ -368,5 +373,32 @@ public class DatabaseSeeder implements ApplicationRunner {
             List<String> tags,
             Instant createdAt
     ) {
+    }
+
+    private void ensureDemoCredentials() {
+        License demoLicense = licenseRepository.findByBrokerLicenseId("lic_demo")
+                .orElseGet(this::seedDemoLicense);
+
+        ensureDemoUser(USER_ADMIN_ID, demoLicense, "admin@demo.doxa.com", UserRole.ADMIN);
+        ensureDemoUser(USER_CLOSER_ID, demoLicense, "closer@demo.doxa.com", UserRole.CLOSER);
+        ensureDemoUser(USER_SDR_ID, demoLicense, "sdr@demo.doxa.com", UserRole.SDR);
+
+        log.info("Demo credentials confirmed: {}", "admin@demo.doxa.com / password123");
+    }
+
+    private void ensureDemoUser(UUID id, License license, String email, UserRole role) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseGet(() -> userRepository.findById(id).orElse(null));
+
+        if (user == null) {
+            seedUser(id, license, email, role);
+            return;
+        }
+
+        user.setLicense(license);
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(DEMO_PASSWORD));
+        user.setRole(role);
+        userRepository.save(user);
     }
 }
