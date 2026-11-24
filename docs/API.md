@@ -97,6 +97,30 @@ Autenticação: `Authorization: Bearer <token>` (exceto rotas públicas).
 
 ---
 
+## API Tokens (Admin)
+
+Todas as rotas abaixo exigem JWT de usuário Administrador.
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/developer/tokens/scopes` | Escopos suportados |
+| GET | `/api/developer/tokens` | Tokens da licença |
+| POST | `/api/developer/tokens` | Criar token; o segredo completo é retornado uma única vez |
+| DELETE | `/api/developer/tokens/{id}` | Revogar token |
+| POST | `/api/developer/tokens/inspect` | Validar e inspecionar token |
+
+Os tokens usam o prefixo `doxa_live_`, são armazenados como hash BCrypt e aplicam escopos por endpoint. A revogação/expiração é verificada a cada requisição.
+
+## Model Context Protocol
+
+Endpoint Streamable HTTP: `POST /mcp`. Envie JSON-RPC 2.0 com o header `Authorization: Bearer <api-token>`. O token precisa do escopo `mcp:access`; cada Tool/Resource também verifica seu escopo de dados.
+
+Métodos implementados: `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list` e `resources/read`.
+
+Tools: `search_contacts`, `list_opportunities`, `get_dashboard_kpis`. Resource: `crm://dashboard/overview`.
+
+---
+
 ## Webhook
 
 Header: `X-Broker-Signature: sha256=<HMAC do body>`

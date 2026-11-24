@@ -1,0 +1,11 @@
+{
+  "name": "doxa-crm-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-all.mjs",
+    "dev:crm": "npm --prefix frontend run dev",
+    "dev:portal": "npm --prefix developer-portal run dev",
+    "dev:backend": "node scripts/dev-backend.mjs"
+  }
+}

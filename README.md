@@ -25,7 +25,7 @@ git clone https://github.com/<seu-usuario>/Doxa-CRM.git
 cd Doxa-CRM
 ```
 
-### 2. Suba o banco de dados (PostgreSQL)
+### 2. Suba o banco de dados (PostgreSQL), se necessário
 
 Abra um terminal na pasta `backend/`:
 
@@ -34,7 +34,7 @@ cd backend
 docker compose up -d
 ```
 
-Isso cria o PostgreSQL em `localhost:5432`:
+Isso cria o PostgreSQL em `localhost:5433`:
 
 | Campo | Valor |
 |-------|-------|
@@ -42,7 +42,7 @@ Isso cria o PostgreSQL em `localhost:5432`:
 | Usuário | `doxa` |
 | Senha | `doxa` |
 
-Verifique se o container está rodando:
+O comando `npm run dev` na raiz inicia esse container automaticamente quando ele ainda não estiver acessível. Para executar apenas o backend, inicie o banco manualmente antes. Verifique se o container está rodando:
 
 ```bash
 docker compose ps
@@ -86,7 +86,20 @@ npm run dev
 
 Frontend em: **http://localhost:3000**
 
-### 5. Faça login
+### 5. Suba o Portal do Desenvolvedor (opcional)
+
+Em outro terminal, na raiz do workspace:
+
+```powershell
+npm --prefix developer-portal install
+npm --prefix developer-portal run dev
+```
+
+Portal em: **http://localhost:3001**. Para alterar a porta, defina `DEVELOPER_PORTAL_PORT`; para apontar a outro backend, defina `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_MCP_URL` no ambiente do portal.
+
+Também é possível iniciar API, frontend CRM e portal juntos com `npm install` na raiz e `npm run dev`. Para iniciar um processo individualmente, use `npm run dev:backend`, `npm run dev:crm` ou `npm run dev:portal`.
+
+### 6. Faça login
 
 | E-mail | Senha | Papel |
 |--------|-------|-------|
@@ -226,6 +239,7 @@ Doxa-CRM/
 ## Documentação adicional
 
 - [Referência de API](docs/API.md)
+- [Portal do Desenvolvedor](developer-portal/README.md)
 - [WRITEUP — decisões de arquitetura](WRITEUP.md)
 - [Backend — detalhes técnicos](backend/README.md)
 

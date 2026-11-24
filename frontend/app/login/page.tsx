@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { login } from "@/lib/api";
+import { ApiError, login } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -21,8 +21,14 @@ export default function LoginPage() {
       setToken(response.token);
       router.push("/opportunities");
       router.refresh();
-    } catch {
-      setError("Email ou senha inválidos.");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setError("Email ou senha inválidos.");
+      } else if (error instanceof ApiError) {
+        setError(`Falha na API (HTTP ${error.status}). Tente novamente.`);
+      } else {
+        setError("Não foi possível conectar à API. Verifique se o backend está em execução em http://localhost:8080.");
+      }
     } finally {
       setLoading(false);
     }
